@@ -8,6 +8,7 @@
 package com.facebook.react.uimanager;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import androidx.annotation.Nullable;
 import com.facebook.common.logging.FLog;
@@ -20,6 +21,7 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.facebook.react.uimanager.annotations.ReactPropGroup;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -141,16 +143,64 @@ import java.util.Map;
         }
       } catch (Throwable t) {
         FLog.e(ViewManager.class, "Error while updating prop " + mPropName, t);
+
+        String debugStackStr = getParentHierachyDebugInfoString(nodeToUpdate);
+
         throw new JSApplicationIllegalArgumentException(
             "Error while updating property '"
                 + mPropName
-                + "' in shadow node of type: "
-                + nodeToUpdate.getViewClass(),
+                + "' " +
+                " value='" + ("" + value) + "' in shadow node of type: "
+                + nodeToUpdate.getViewClass()
+                + " | debugStack: " + debugStackStr,
             t);
       }
     }
 
     protected abstract @Nullable Object getValueOrDefault(Object value, Context context);
+
+    // Luatnd: Add debug fn
+    protected static ArrayList<Map<String,String>> getParentHierachyDebugInfo(ReactShadowNode nodeToUpdate) {
+      ArrayList<Map<String,String>> stack = new ArrayList<Map<String,String>>();
+      ReactShadowNode node = nodeToUpdate;
+      int count = 0;
+
+      while (node.getParent() != null) {
+        String x = node.getViewClass();
+        String x2 = "" + node.getScreenY();
+        Map<String,String> info = new HashMap<String, String>(){{
+          put("name", x);
+          put("y", x2);
+//          put("padding", Integer.toString(Arrays.toString(node.mPadding)));
+        }};
+        stack.add(info);
+        node = node.getParent();
+        count++;
+
+        // Break if debug is too large
+        if (count > 300) {
+          break;
+        }
+      }
+
+      return stack;
+    }
+
+    protected static String getParentHierachyDebugInfoString(ReactShadowNode nodeToUpdate) {
+      ArrayList<Map<String,String>> debugStack = getParentHierachyDebugInfo(nodeToUpdate);
+      String str = "";
+
+      for (Map<String,String> el : debugStack) {
+        // str += " > name(y: y, padding: [])"
+        str += " > "
+            + el.getOrDefault("name", "")
+            + "(y: " + el.getOrDefault("y", "")
+            + ", padding: " + el.getOrDefault("padding", "")
+            + ")";
+      }
+
+      return str;
+    }
   }
 
   private static class DynamicPropSetter extends PropSetter {
