@@ -106,9 +106,32 @@ import java.util.Map;
 
     public void updateShadowNodeProp(ReactShadowNode nodeToUpdate, Object value) {
       try {
+        /*
+        + Object[] local_SHADOW_ARGS = new Object[SHADOW_ARGS.length];
+        + local_SHADOW_ARGS[0] = extractProperty(props);
+        + mSetter.invoke(nodeToUpdate, local_SHADOW_ARGS);
+        + Arrays.fill(local_SHADOW_ARGS, null);
+         */
+//
+//        if (mIndex == null) {
+//          SHADOW_ARGS[0] = getValueOrDefault(value, nodeToUpdate.getThemedContext());
+//          mSetter.invoke(nodeToUpdate, SHADOW_ARGS);
+//          Arrays.fill(SHADOW_ARGS, null);
+//        } else {
+//          SHADOW_GROUP_ARGS[0] = mIndex;
+//          SHADOW_GROUP_ARGS[1] = getValueOrDefault(value, nodeToUpdate.getThemedContext());
+//          mSetter.invoke(nodeToUpdate, SHADOW_GROUP_ARGS);
+//          Arrays.fill(SHADOW_GROUP_ARGS, null);
+//        }
+        // luatnd: Custom to avoid error:
+        // Error while updating property 'marginRight' in shadow node of type: RCTView
         if (mIndex == null) {
-          SHADOW_ARGS[0] = getValueOrDefault(value, nodeToUpdate.getThemedContext());
-          mSetter.invoke(nodeToUpdate, SHADOW_ARGS);
+          Object[] local_SHADOW_ARGS = new Object[SHADOW_ARGS.length];
+          Object a = getValueOrDefault(value, nodeToUpdate.getThemedContext());
+          local_SHADOW_ARGS[0] = a;
+          SHADOW_ARGS[0] = a;
+          mSetter.invoke(nodeToUpdate, local_SHADOW_ARGS);
+          Arrays.fill(local_SHADOW_ARGS, null);
           Arrays.fill(SHADOW_ARGS, null);
         } else {
           SHADOW_GROUP_ARGS[0] = mIndex;
