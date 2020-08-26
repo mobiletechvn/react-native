@@ -26,6 +26,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.facebook.mobiletech.debug.Slack;
+import com.facebook.mobiletech.debug.ReactShadowNodeUtil;
+
+
 /**
  * This class is responsible for holding view manager property setters and is used in a process of
  * updating views with the new properties set in JS.
@@ -106,15 +110,10 @@ import java.util.Map;
       }
     }
 
+
+
     public void updateShadowNodeProp(ReactShadowNode nodeToUpdate, Object value) {
       try {
-        /*
-        + Object[] local_SHADOW_ARGS = new Object[SHADOW_ARGS.length];
-        + local_SHADOW_ARGS[0] = extractProperty(props);
-        + mSetter.invoke(nodeToUpdate, local_SHADOW_ARGS);
-        + Arrays.fill(local_SHADOW_ARGS, null);
-         */
-//
 //        if (mIndex == null) {
 //          SHADOW_ARGS[0] = getValueOrDefault(value, nodeToUpdate.getThemedContext());
 //          mSetter.invoke(nodeToUpdate, SHADOW_ARGS);
@@ -125,26 +124,24 @@ import java.util.Map;
 //          mSetter.invoke(nodeToUpdate, SHADOW_GROUP_ARGS);
 //          Arrays.fill(SHADOW_GROUP_ARGS, null);
 //        }
+
         // luatnd: Custom to avoid error:
         // Error while updating property 'marginRight' in shadow node of type: RCTView
         if (mIndex == null) {
-          Object[] local_SHADOW_ARGS = new Object[SHADOW_ARGS.length];
-          Object a = getValueOrDefault(value, nodeToUpdate.getThemedContext());
-          local_SHADOW_ARGS[0] = a;
-          SHADOW_ARGS[0] = a;
+          SHADOW_ARGS[0] = getValueOrDefault(value, nodeToUpdate.getThemedContext());
           try {
-            mSetter.invoke(nodeToUpdate, local_SHADOW_ARGS);
+            mSetter.invoke(nodeToUpdate, SHADOW_ARGS);
           } catch (Throwable t) {
-            String debugStackStr = getParentHierachyDebugInfoString(nodeToUpdate);
-            Log.e("RNCore", "Error while updating property '"
+            String debugStackStr = ReactShadowNodeUtil.getParentHierachyDebugInfoString(nodeToUpdate);
+            String msg = "Error while updating property '"
               + mPropName
               + "' " +
               " value='" + ("" + value) + "' in shadow node of type: "
               + nodeToUpdate.getViewClass()
-              + " | debugStack: " + debugStackStr);
+              + " | debugStack: " + debugStackStr;
+            Log.e("RNCore", msg);
+            Slack.sendMsg(msg);
           }
-
-          Arrays.fill(local_SHADOW_ARGS, null);
           Arrays.fill(SHADOW_ARGS, null);
         } else {
           SHADOW_GROUP_ARGS[0] = mIndex;
@@ -152,20 +149,22 @@ import java.util.Map;
           try {
             mSetter.invoke(nodeToUpdate, SHADOW_GROUP_ARGS);
           } catch (Throwable t) {
-            String debugStackStr = getParentHierachyDebugInfoString(nodeToUpdate);
-            Log.e("RNCore", "Group Error while updating property '"
+            String debugStackStr = ReactShadowNodeUtil.getParentHierachyDebugInfoString(nodeToUpdate);
+            String msg = "Group Error while updating property '"
               + mPropName
               + "' " +
               " value='" + ("" + value) + "' in shadow node of type: "
               + nodeToUpdate.getViewClass()
-              + " | debugStack: " + debugStackStr);
+              + " | debugStack: " + debugStackStr;
+            Log.e("RNCore", msg);
+            Slack.sendMsg(msg);
           }
           Arrays.fill(SHADOW_GROUP_ARGS, null);
         }
       } catch (Throwable t) {
         FLog.e(ViewManager.class, "Error while updating prop " + mPropName, t);
 
-        String debugStackStr = getParentHierachyDebugInfoString(nodeToUpdate);
+        String debugStackStr = ReactShadowNodeUtil.getParentHierachyDebugInfoString(nodeToUpdate);
 
         throw new JSApplicationIllegalArgumentException(
             "Error while updating property '"
@@ -179,49 +178,6 @@ import java.util.Map;
     }
 
     protected abstract @Nullable Object getValueOrDefault(Object value, Context context);
-
-    // Luatnd: Add debug fn
-    protected static ArrayList<Map<String,String>> getParentHierachyDebugInfo(ReactShadowNode nodeToUpdate) {
-      ArrayList<Map<String,String>> stack = new ArrayList<Map<String,String>>();
-      ReactShadowNode node = nodeToUpdate;
-      int count = 0;
-
-      while (node.getParent() != null) {
-        String x = node.getViewClass();
-        String x2 = "" + node.getScreenY();
-        Map<String,String> info = new HashMap<String, String>(){{
-          put("name", x);
-          put("y", x2);
-//          put("padding", Integer.toString(Arrays.toString(node.mPadding)));
-        }};
-        stack.add(info);
-        node = node.getParent();
-        count++;
-
-        // Break if debug is too large
-        if (count > 300) {
-          break;
-        }
-      }
-
-      return stack;
-    }
-
-    protected static String getParentHierachyDebugInfoString(ReactShadowNode nodeToUpdate) {
-      ArrayList<Map<String,String>> debugStack = getParentHierachyDebugInfo(nodeToUpdate);
-      String str = "";
-
-      for (Map<String,String> el : debugStack) {
-        // str += " > name(y: y, padding: [])"
-        str += " > "
-            + el.getOrDefault("name", "")
-            + "(y: " + el.getOrDefault("y", "")
-            + ", padding: " + el.getOrDefault("padding", "")
-            + ")";
-      }
-
-      return str;
-    }
   }
 
   private static class DynamicPropSetter extends PropSetter {
