@@ -132,13 +132,34 @@ import java.util.Map;
           Object a = getValueOrDefault(value, nodeToUpdate.getThemedContext());
           local_SHADOW_ARGS[0] = a;
           SHADOW_ARGS[0] = a;
-          mSetter.invoke(nodeToUpdate, local_SHADOW_ARGS);
+          try {
+            mSetter.invoke(nodeToUpdate, local_SHADOW_ARGS);
+          } catch (Throwable t) {
+            String debugStackStr = getParentHierachyDebugInfoString(nodeToUpdate);
+            Log.e("RNCore", "Error while updating property '"
+              + mPropName
+              + "' " +
+              " value='" + ("" + value) + "' in shadow node of type: "
+              + nodeToUpdate.getViewClass()
+              + " | debugStack: " + debugStackStr);
+          }
+
           Arrays.fill(local_SHADOW_ARGS, null);
           Arrays.fill(SHADOW_ARGS, null);
         } else {
           SHADOW_GROUP_ARGS[0] = mIndex;
           SHADOW_GROUP_ARGS[1] = getValueOrDefault(value, nodeToUpdate.getThemedContext());
-          mSetter.invoke(nodeToUpdate, SHADOW_GROUP_ARGS);
+          try {
+            mSetter.invoke(nodeToUpdate, SHADOW_GROUP_ARGS);
+          } catch (Throwable t) {
+            String debugStackStr = getParentHierachyDebugInfoString(nodeToUpdate);
+            Log.e("RNCore", "Group Error while updating property '"
+              + mPropName
+              + "' " +
+              " value='" + ("" + value) + "' in shadow node of type: "
+              + nodeToUpdate.getViewClass()
+              + " | debugStack: " + debugStackStr);
+          }
           Arrays.fill(SHADOW_GROUP_ARGS, null);
         }
       } catch (Throwable t) {
