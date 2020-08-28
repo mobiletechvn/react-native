@@ -10,7 +10,7 @@ public class Slack {
   // Save last send to avoid send multiple msg in 1 secs
   public static long lastSendSlackTs = 0; // NOTE: You can miss some message when using multiple sendMsg source, please convert this class to non-static usage instead
   public static long THROTLE_IN_SECONDS = 3; // do not send more than 1 msg in 3 seconds
-  public static String WEB_HOOK_URL = "https://hooks.slack.com/services/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";
+  public static String WEB_HOOK_URL = "https://hooks.slack.com/services/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";
 
   public static void sendMsg(String msg) {
     try {
