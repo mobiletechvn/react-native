@@ -188,10 +188,7 @@ public class ForwardingCookieHandler extends CookieHandler {
         // specific exception.
         // https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/webkit/WebViewFactory.java#348
         if (message != null
-            && exception
-                .getClass()
-                .getCanonicalName()
-                .equals("android.webkit.WebViewFactory.MissingWebViewPackageException")) {
+            && message.contains("WebView")) {
           return null;
         } else {
           throw exception;
